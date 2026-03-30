@@ -1,7 +1,7 @@
 # BioPay — Biometric Security Layer Before Payment
 
 **Face + Voice verification gate built in Python (FastAPI) + Go (Gin).**  
-Zero database. Embeddings stored as AES-256-GCM encrypted files only.
+Zero database. Embeddings stored as AES-256-GCM-encrypted files only.
 
 ---
 
@@ -11,7 +11,7 @@ Zero database. Embeddings stored as AES-256-GCM encrypted files only.
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          PAYMENT FLOW                               │
 │                                                                     │
-│  Client                Go Gateway :8080          Python Svc :8001  │
+│  Client                Go Gateway:8080          Python Svc:8001  │
 │    │                        │                         │             │
 │    │── POST /payment/initiate ──>                     │             │
 │    │                        │── POST /session/create ─>            │
@@ -277,7 +277,7 @@ The Go gateway computes a **risk score (0–100)** combining:
 
 ## Security Properties
 
-- **No raw biometrics on disk** — only embeddings, immediately after extraction the image/audio is wiped from RAM
+- **No raw biometrics on disk** — only embeddings, immediately after extraction, the image/audio is wiped from RAM
 - **AES-256-GCM** with per-file derived keys — tamper-evident (auth tag fails)  
 - **User IDs hashed** in filenames — SHA-256, never stored plaintext  
 - **Secure memory wipe** — both Python (`ctypes.memset`) and Go (`SecureZeroBytes`) overwrite sensitive buffers  
