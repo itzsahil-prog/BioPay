@@ -1,0 +1,64 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  BioPay — Full Stack
+#
+#  Services:
+#    biometric  — Python FastAPI (face + voice verification, :8001)
+#    gateway    — Go Gin (payment gateway with biometric gate, :8080)
+#
+#  No external database. All persistence via encrypted files.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Python Biometric Service ───────────────────────────────────────────────
+  biometric:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    container_name: biopay-biometric
+    ports:
+      - "8001:8001"
+    environment:
+      - BIOPAY_SECRET_KEY=${BIOPAY_SECRET_KEY:-change-me-in-production-32chars}
+      - LOG_LEVEL=INFO
+    volumes:
+      - embeddings_face:/app/data/embeddings/face
+      - embeddings_voice:/app/data/embeddings/voice
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s   # Models take time to load
+    restart: unless-stopped
+
+  # ── Go Payment Gateway ─────────────────────────────────────────────────────
+  gateway:
+    build:
+      context: ./go
+      dockerfile: Dockerfile
+    container_name: biopay-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - BIOMETRIC_SERVICE_URL=http://biometric:8001
+      - GATEWAY_PORT=8080
+      - GIN_MODE=release
+    depends_on:
+      biometric:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+# ── Persistent Volumes (embedding files) ──────────────────────────────────────
+volumes:
+  embeddings_face:
+    driver: local
+  embeddings_voice:
+    driver: local
